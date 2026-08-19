@@ -5,11 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MOBIN GAME BETA 0.4.2</title>
 
-    <!-- Xterm.js Terminal Engine -->
+    <!-- Xterm.js & Fit Addon -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
     <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
 
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
         body {
             background-color: #0f172a;
             color: #f8fafc;
@@ -19,66 +25,208 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            padding: 15px;
         }
+
+        /* --- UI Card Container --- */
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        }
+
+        p.subtitle {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            margin-bottom: 25px;
+        }
+
+        /* --- Menu Buttons --- */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            font-size: 1.05rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #f1f5f9;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+            box-shadow: 0 4px 12px rgba(51, 65, 85, 0.4);
+        }
+
+        /* --- Terminal View --- */
+        #game-view {
+            display: none;
+            width: 100%;
+            max-width: 850px;
+            flex-direction: column;
+            align-items: center;
+        }
+
         #terminal-container {
             width: 100%;
-            max-width: 800px;
-            height: 500px;
+            height: 520px;
             background: #000;
             padding: 10px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             border: 1px solid #334155;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-    <h2>🏰 MOBIN GAME BETA 0.4.2</h2>
-    <div id="terminal-container"></div>
+    <!-- ================= MAIN MENU ================= -->
+    <div id="main-menu" class="card">
+        <h1>🏰 MOBIN GAME</h1>
+        <p class="subtitle">نسخه آزمایشی (BETA 0.4.2)</p>
+
+        <div class="btn-group">
+            <button class="btn" onclick="launchGame()">🎮 شروع بازی</button>
+            <button class="btn btn-secondary" onclick="showModal('راهنما', 'توی این بازی باید با خرید سرباز و ارتقای اون‌ها از قلعه در برابر حمله زامبی‌ها دفاع کنی!\n\nهر مرحله زامبی‌های قوی‌تری داره. سکه‌هات رو هوشمندانه خرج کن!')">📜 راهنمای بازی</button>
+            <button class="btn btn-secondary" onclick="showModal('درباره بازی', 'توسعه داده شده توسط مبین گرجی‌زاده\nنسخه: Beta 0.4.2\nزبان برنامه نویسی: Python / Web JavaScript')">ℹ️ درباره سازنده</button>
+        </div>
+    </div>
+
+    <!-- ================= GAME TERMINAL VIEW ================= -->
+    <div id="game-view">
+        <div class="top-bar">
+            <h3 style="color: #38bdf8;">🏰 MOBIN GAME TERMINAL</h3>
+            <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="returnToMenu()">🏠 بازگشت به منو</button>
+        </div>
+        <div id="terminal-container"></div>
+    </div>
 
     <script>
-        const term = new Terminal({
-            cursorBlink: true,
-            fontSize: 15,
-            fontFamily: 'monospace',
-            theme: { background: '#000000', foreground: '#00ff66' }
-        });
+        let term, fitAddon;
+        let isGameRunning = false;
 
-        term.open(document.getElementById('terminal-container'));
+        function showModal(title, text) {
+            alert(`${title}\n\n${text}`);
+        }
+
+        function launchGame() {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-view').style.display = 'flex';
+
+            if (!term) {
+                initTerminal();
+            } else {
+                term.clear();
+            }
+            
+            if (!isGameRunning) {
+                isGameRunning = true;
+                startGame();
+            }
+        }
+
+        function returnToMenu() {
+            if (confirm("آیا می‌خواهی از بازی خارج بشی و به منو برگردی؟")) {
+                location.reload(); // ریست کامل بازی برای بازگشت به منو
+            }
+        }
+
+        function initTerminal() {
+            term = new Terminal({
+                cursorBlink: true,
+                fontSize: 14,
+                fontFamily: 'monospace',
+                theme: { background: '#000000', foreground: '#00ff66' },
+                convertEol: true,
+                wordWrap: true
+            });
+
+            fitAddon = new FitAddon.FitAddon();
+            term.loadAddon(fitAddon);
+            term.open(document.getElementById('terminal-container'));
+            fitAddon.fit();
+
+            window.addEventListener('resize', () => fitAddon.fit());
+
+            term.onData(e => {
+                if (e === '\r') { 
+                    term.write('\r\n');
+                    if (inputResolver) {
+                        let res = inputResolver;
+                        inputResolver = null;
+                        res(inputBuffer.trim());
+                    }
+                    inputBuffer = "";
+                } else if (e === '\u007F') { 
+                    if (inputBuffer.length > 0) {
+                        inputBuffer = inputBuffer.slice(0, -1);
+                        term.write('\b \b');
+                    }
+                } else {
+                    inputBuffer += e;
+                    term.write(e);
+                }
+            });
+        }
 
         let inputBuffer = "";
         let inputResolver = null;
-
-        term.onData(e => {
-            if (e === '\r') { 
-                term.write('\r\n');
-                if (inputResolver) {
-                    let res = inputResolver;
-                    inputResolver = null;
-                    res(inputBuffer.trim());
-                }
-                inputBuffer = "";
-            } else if (e === '\u007F') { 
-                if (inputBuffer.length > 0) {
-                    inputBuffer = inputBuffer.slice(0, -1);
-                    term.write('\b \b');
-                }
-            } else {
-                inputBuffer += e;
-                term.write(e);
-            }
-        });
 
         function readInput(promptText) {
             if (promptText) term.write(promptText);
             return new Promise(resolve => { inputResolver = resolve; });
         }
 
-        async function typePrint(text, speed = 15) {
+        async function typePrint(text, speed = 10) {
             for (let char of text) {
                 term.write(char);
                 await new Promise(r => setTimeout(r, speed));
@@ -91,13 +239,6 @@
         // --- GAME ENGINE LOGIC ---
         let coins = 20, level = 1, castleHp = 100, maxCastleHp = 100, upgradeLevel = 0;
         let soldiers = [], playerName = "", lang = "fa";
-
-        function hpBar(hp, maxHp, length = 18) {
-            if (maxHp <= 0) return "";
-            let ratio = Math.max(0, Math.min(1, hp / maxHp));
-            let filled = Math.floor(ratio * length);
-            return "█".repeat(filled) + "░".repeat(length - filled);
-        }
 
         async function startGame() {
             term.write("╔══════════════════════════════════════╗\r\n");
@@ -268,8 +409,6 @@
             }
             await typePrint(`\r\n🏆 تبریک ${playerName}! بازی رو تموم کردی! 🔥`);
         }
-
-        startGame();
     </script>
 </body>
 </html>
