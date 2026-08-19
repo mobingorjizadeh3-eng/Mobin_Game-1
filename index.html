@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIN GAME - REAL PIXEL ART</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+        body {
+            background-color: #0b0f19;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 15px;
+            overflow-x: hidden;
+        }
+
+        /* --- MAIN MENU (LOBBY) --- */
+        #main-menu {
+            background: rgba(30, 41, 59, 0.95);
+            border: 2px solid #38bdf8;
+            border-radius: 20px;
+            padding: 35px 25px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.2);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        h1 { font-size: 2.2rem; color: #38bdf8; margin-bottom: 8px; text-shadow: 0 0 12px rgba(56, 189, 248, 0.5); }
+        p.subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
+        .menu-btn-group { display: flex; flex-direction: column; gap: 12px; }
+
+        /* --- GAME VIEW --- */
+        #game-view {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 15px;
+            width: 100%;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 380px;
+            background: #000;
+            border-radius: 12px;
+            border: 2px solid #475569;
+            display: block;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 8px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); }
+        .btn:disabled { background: #334155; color: #64748b; opacity: 0.6; cursor: not-allowed; }
+        .btn-danger { background: #dc2626; }
+        .btn-fire { background: #d97706; }
+        .btn-secondary { background: #334155; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOBBY (UNTOUCHED) -->
+    <div id="main-menu">
+        <h1>🏰 MOBIN GAME</h1>
+        <p class="subtitle">نسخه گرافیک پیکسل‌آرت واقعی (GRAPHIC ENGINE V3)</p>
+        <div class="menu-btn-group">
+            <button class="btn" onclick="startGameView()">🎮 شروع بازی</button>
+            <button class="btn btn-secondary" onclick="alert('📜 راهنما:\n1. سرباز و کماندار اضافه کنید.\n2. با گلوله آتشین زامبی‌ها را خاکستر کنید!')">📜 راهنما</button>
+            <button class="btn btn-secondary" onclick="alert('مبین گرجی‌زاده')">ℹ️ درباره سازنده</button>
+        </div>
+    </div>
+
+    <!-- GAME PLAY -->
+    <div id="game-view">
+        <div class="card">
+            <div class="hud">
+                <span>🎯 موج: <span id="wave-txt" style="color:#38bdf8;">1</span></span>
+                <span>💰 طلا: <span id="coin-txt" style="color:#facc15;">100</span></span>
+                <span>💧 مانا: <span id="mana-txt" style="color:#60a5fa;">100</span></span>
+                <span>🏰 قلعه: <span id="castle-hp" style="color:#4ade80;">500</span></span>
+                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="location.reload()">🏠 منو</button>
+            </div>
+
+            <canvas id="gameCanvas" width="750" height="380"></canvas>
+
+            <div class="controls">
+                <button class="btn" id="btn-archer" onclick="buyArcher()">🏹 کماندار (30💰)</button>
+                <button class="btn" id="btn-knight" onclick="buyKnight()">🗡️ شوالیه (40💰)</button>
+                <button class="btn btn-fire" id="btn-fireball" onclick="castFireball()">🔥 گلوله آتشین (50💧)</button>
+                <button class="btn btn-danger" id="btn-wave" onclick="startNextWave()">⚔️ شروع موج</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ASSET LOADER (REAL PIXEL ART IMAGES) ---
+        const images = {};
+        const sources = {
+            bg: 'https://img.freepik.com/free-vector/pixel-art-game-background-grass-ground-sky_107791-23653.jpg',
+            castle: 'https://cdn-icons-png.flaticon.com/512/2822/2822432.png',
+            knight: 'https://cdn-icons-png.flaticon.com/512/1066/1066371.png',
+            archer: 'https://cdn-icons-png.flaticon.com/512/3408/3408545.png',
+            zombie: 'https://cdn-icons-png.flaticon.com/512/1066/1066388.png',
+            fireball: 'https://cdn-icons-png.flaticon.com/512/785/785116.png'
+        };
+
+        let loadedCount = 0;
+        const totalSources = Object.keys(sources).length;
+
+        for (let src in sources) {
+            images[src] = new Image();
+            images[src].crossOrigin = "Anonymous";
+            images[src].src = sources[src];
+            images[src].onload = () => {
+                loadedCount++;
+            };
+        }
+
+        // --- GAME VARIABLES ---
+        let gold = 100, mana = 100, wave = 1, castleHp = 500, maxCastleHp = 500, inBattle = false;
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let archers = [{ x: 630, y: 130 }, { x: 670, y: 130 }];
+        let knights = [];
+        let zombies = [];
+        let arrows = [];
+        let fireballs = [];
+        let floatingTexts = [];
+
+        function startGameView() {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-view').style.display = 'flex';
+            requestAnimationFrame(gameLoop);
+            updateUI();
+        }
+
+        function updateUI() {
+            document.getElementById('coin-txt').innerText = gold;
+            document.getElementById('mana-txt').innerText = Math.floor(mana);
+            document.getElementById('wave-txt').innerText = wave;
+            document.getElementById('castle-hp').innerText = Math.max(0, Math.floor(castleHp));
+            document.getElementById('btn-archer').disabled = gold < 30;
+            document.getElementById('btn-knight').disabled = gold < 40;
+            document.getElementById('btn-fireball').disabled = mana < 50;
+            document.getElementById('btn-wave').disabled = inBattle;
+        }
+
+        function buyArcher() {
+            if (gold >= 30) {
+                gold -= 30;
+                archers.push({ x: 600 + (archers.length * 15 % 70), y: 130 });
+                updateUI();
+            }
+        }
+
+        function buyKnight() {
+            if (gold >= 40) {
+                gold -= 40;
+                knights.push({ x: 500 - (knights.length * 20), y: 280, hp: 120, maxHp: 120 });
+                updateUI();
+            }
+        }
+
+        function castFireball() {
+            if (mana >= 50) {
+                mana -= 50;
+                fireballs.push({ x: 650, y: 100, targetX: 250, targetY: 290, speed: 8 });
+                updateUI();
+            }
+        }
+
+        function startNextWave() {
+            inBattle = true;
+            let count = 4 + wave * 2;
+            let spawned = 0;
+
+            let interval = setInterval(() => {
+                zombies.push({
+                    x: -40, y: 280,
+                    hp: 70 + (wave * 20), maxHp: 70 + (wave * 20),
+                    speed: 0.8 + Math.random() * 0.4
+                });
+                spawned++;
+                if (spawned >= count) clearInterval(interval);
+            }, 1000);
+            updateUI();
+        }
+
+        function addText(x, y, txt, color) {
+            floatingTexts.push({ x, y, txt, color, alpha: 1 });
+        }
+
+        let lastShoot = 0;
+
+        function gameLoop(timestamp) {
+            if (mana < 100) { mana = Math.min(100, mana + 0.05); updateUI(); }
+
+            // Draw Real Background
+            if (images.bg.complete) {
+                ctx.drawImage(images.bg, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#1e1b4b'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            }
+
+            // Draw Real Castle Sprite
+            if (images.castle.complete) {
+                ctx.drawImage(images.castle, 560, 100, 180, 200);
+            }
+
+            // Draw Real Archer Sprites
+            archers.forEach(a => {
+                if (images.archer.complete) ctx.drawImage(images.archer, a.x, a.y, 35, 35);
+            });
+
+            // Shoot Arrows
+            if (timestamp - lastShoot > 1100 && zombies.length > 0) {
+                lastShoot = timestamp;
+                archers.forEach(a => {
+                    arrows.push({ x: a.x, y: a.y, targetX: zombies[0].x, targetY: zombies[0].y, speed: 8 });
+                });
+            }
+
+            // Arrows Movement
+            for (let i = arrows.length - 1; i >= 0; i--) {
+                let arr = arrows[i];
+                let dx = arr.targetX - arr.x, dy = arr.targetY - arr.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist < 10) {
+                    if (zombies.length > 0) {
+                        zombies[0].hp -= 20;
+                        addText(zombies[0].x, zombies[0].y - 10, "-20", "#ef4444");
+                        if (zombies[0].hp <= 0) { gold += 10; zombies.shift(); }
+                    }
+                    arrows.splice(i, 1);
+                    updateUI();
+                } else {
+                    arr.x += (dx / dist) * arr.speed; arr.y += (dy / dist) * arr.speed;
+                    ctx.fillStyle = '#fde047'; ctx.fillRect(arr.x, arr.y, 4, 4);
+                }
+            }
+
+            // Fireball Effect
+            for (let i = fireballs.length - 1; i >= 0; i--) {
+                let fb = fireballs[i];
+                let dx = fb.targetX - fb.x, dy = fb.targetY - fb.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist < 10) {
+                    zombies.forEach(z => {
+                        z.hp -= 80;
+                        addText(z.x, z.y - 15, "-80 FIRE!", "#f97316");
+                    });
+                    zombies = zombies.filter(z => z.hp > 0);
+                    fireballs.splice(i, 1);
+                    updateUI();
+                } else {
+                    fb.x += (dx / dist) * fb.speed; fb.y += (dy / dist) * fb.speed;
+                    if (images.fireball.complete) ctx.drawImage(images.fireball, fb.x, fb.y, 40, 40);
+                }
+            }
+
+            // Knights Render
+            knights.forEach(k => {
+                if (images.knight.complete) ctx.drawImage(images.knight, k.x, k.y, 40, 40);
+            });
+
+            // Zombies Render & Fighting
+            for (let i = zombies.length - 1; i >= 0; i--) {
+                let z = zombies[i];
+                let knight = knights.find(k => Math.abs(k.x - z.x) < 25);
+
+                if (knight) {
+                    knight.hp -= 0.3; z.hp -= 0.4;
+                    if (knight.hp <= 0) knights = knights.filter(k => k !== knight);
+                } else if (z.x < 550) {
+                    z.x += z.speed;
+                } else {
+                    castleHp -= 0.2;
+                    updateUI();
+                }
+
+                if (images.zombie.complete) ctx.drawImage(images.zombie, z.x, z.y, 40, 40);
+
+                // Health Bar
+                ctx.fillStyle = '#1e293b'; ctx.fillRect(z.x, z.y - 8, 35, 4);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(z.x, z.y - 8, (z.hp / z.maxHp) * 35, 4);
+            }
+
+            // Floating Texts
+            floatingTexts.forEach((ft, idx) => {
+                ft.y -= 0.8; ft.alpha -= 0.02;
+                ctx.fillStyle = ft.color; ctx.font = 'bold 13px sans-serif';
+                ctx.fillText(ft.txt, ft.x, ft.y);
+                if (ft.alpha <= 0) floatingTexts.splice(idx, 1);
+            });
+
+            // Wave Check
+            if (inBattle && zombies.length === 0) {
+                inBattle = false; wave++; gold += 40; updateUI();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
