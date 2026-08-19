@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOBIN GAME BETA 0.4.2</title>
+
+    <!-- Xterm.js Terminal Engine -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        #terminal-container {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            background: #000;
+            padding: 10px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border: 1px solid #334155;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>🏰 MOBIN GAME BETA 0.4.2</h2>
+    <div id="terminal-container"></div>
+
+    <script>
+        const term = new Terminal({
+            cursorBlink: true,
+            fontSize: 15,
+            fontFamily: 'monospace',
+            theme: { background: '#000000', foreground: '#00ff66' }
+        });
+
+        term.open(document.getElementById('terminal-container'));
+
+        let inputBuffer = "";
+        let inputResolver = null;
+
+        term.onData(e => {
+            if (e === '\r') { 
+                term.write('\r\n');
+                if (inputResolver) {
+                    let res = inputResolver;
+                    inputResolver = null;
+                    res(inputBuffer.trim());
+                }
+                inputBuffer = "";
+            } else if (e === '\u007F') { 
+                if (inputBuffer.length > 0) {
+                    inputBuffer = inputBuffer.slice(0, -1);
+                    term.write('\b \b');
+                }
+            } else {
+                inputBuffer += e;
+                term.write(e);
+            }
+        });
+
+        function readInput(promptText) {
+            if (promptText) term.write(promptText);
+            return new Promise(resolve => { inputResolver = resolve; });
+        }
+
+        async function typePrint(text, speed = 15) {
+            for (let char of text) {
+                term.write(char);
+                await new Promise(r => setTimeout(r, speed));
+            }
+            term.write('\r\n');
+        }
+
+        function clearTerm() { term.clear(); }
+
+        // --- GAME ENGINE LOGIC ---
+        let coins = 20, level = 1, castleHp = 100, maxCastleHp = 100, upgradeLevel = 0;
+        let soldiers = [], playerName = "", lang = "fa";
+
+        function hpBar(hp, maxHp, length = 18) {
+            if (maxHp <= 0) return "";
+            let ratio = Math.max(0, Math.min(1, hp / maxHp));
+            let filled = Math.floor(ratio * length);
+            return "█".repeat(filled) + "░".repeat(length - filled);
+        }
+
+        async function startGame() {
+            term.write("╔══════════════════════════════════════╗\r\n");
+            term.write("║           🎮 MOBIN GAME              ║\r\n");
+            term.write("║              BETA 0.4.2              ║\r\n");
+            term.write("╚══════════════════════════════════════╝\r\n\r\n");
+
+            await typePrint("لطفا زبان خود را انتخاب کنید / Select Language:");
+            term.write("1) 🇮🇷 فارسی\r\n2) 🇬🇧 English\r\n");
+
+            while (true) {
+                let choice = await readInput("\r\nChoice: ");
+                if (choice === "1" || choice === "2") {
+                    lang = choice === "1" ? "fa" : "en";
+                    break;
+                }
+                term.write("❌ انتخاب نامعتبر!\r\n");
+            }
+
+            clearTerm();
+            if (lang === "fa") {
+                await typePrint("🎮 به Mobin Game خوش اومدی!\n");
+                while (true) {
+                    playerName = await readInput("👤 لطفا یه اسم انتخاب کن: ");
+                    if (playerName) break;
+                    term.write("❌ اسم نمی‌تونه خالی باشه!\r\n");
+                }
+            } else {
+                await typePrint("🎮 Welcome to Mobin Game!\n");
+                while (true) {
+                    playerName = await readInput("👤 Choose your name: ");
+                    if (playerName) break;
+                    term.write("❌ Name cannot be empty!\r\n");
+                }
+            }
+
+            clearTerm();
+            await typePrint(`سلام ${playerName} 👋\n`);
+            await typePrint("این نسخه Beta هست و بازی آنلاین نداره.");
+            await typePrint("شروع کنیم؟\n1) آره\n2) نه");
+
+            while (true) {
+                let start = await readInput("\r\n> ");
+                if (start === "1") break;
+                if (start === "2") {
+                    await typePrint("\r\n👋 Goodbye / خداحافظ!");
+                    return;
+                }
+                term.write("❌ انتخاب نامعتبر!\r\n");
+            }
+
+            await mainLoop();
+        }
+
+        async function shop() {
+            while (true) {
+                clearTerm();
+                term.write("╔══════════════════════════════════════╗\r\n");
+                term.write("║              🏪 SHOP                 ║\r\n");
+                term.write("╚══════════════════════════════════════╝\r\n\r\n");
+                term.write(`💰 Coin: ${coins}\r\n🪖 Soldiers: ${soldiers.length}\r\n⬆️ Upgrade Level: ${upgradeLevel}\r\n\r\n`);
+                term.write("1) 🪖 خرید سرباز (10 Coin)\r\n");
+                term.write(soldiers.length > 0 && upgradeLevel === 0 ? "2) ⬆️ Upgrade 1 (16 Coin)\r\n" : "2) 🔒 Upgrade 1 (قفل / خریداری شده)\r\n");
+                term.write(upgradeLevel === 1 && soldiers.length > 0 ? "3) 🔥 Upgrade 3 (40 Coin)\r\n" : "3) 🔒 Upgrade 3 (قفل / خریداری شده)\r\n");
+                term.write("4) 🔙 خروج\r\n");
+
+                let choice = await readInput("\r\nانتخاب: ");
+                if (choice === "1") {
+                    if (coins < 10) await typePrint("\r\n❌ Coin کافی نداری!");
+                    else {
+                        coins -= 10;
+                        let dmg = 12 + (upgradeLevel >= 1 ? 8 : 0) + (upgradeLevel >= 3 ? 20 : 0);
+                        let mhp = 100 + (upgradeLevel >= 1 ? 20 : 0) + (upgradeLevel >= 3 ? 40 : 0);
+                        soldiers.push({ hp: mhp, max_hp: mhp, damage: dmg });
+                        await typePrint(`\r\n🪖 سرباز خریداری شد! (کل: ${soldiers.length})`);
+                    }
+                } else if (choice === "2") {
+                    if (soldiers.length === 0) await typePrint("\r\n🚫 اول باید حداقل یک سرباز داشته باشی.");
+                    else if (upgradeLevel >= 1) await typePrint("\r\n❌ Upgrade 1 قبلاً خریداری شده.");
+                    else if (coins < 16) await typePrint("\r\n❌ Coin کافی نداری!");
+                    else {
+                        coins -= 16; upgradeLevel = 1;
+                        soldiers.forEach(s => { s.damage += 8; s.max_hp += 20; s.hp += 20; });
+                        await typePrint("\r\n⬆️ Upgrade 1 فعال شد!");
+                    }
+                } else if (choice === "3") {
+                    if (soldiers.length === 0) await typePrint("\r\n🚫 اول باید حداقل یک سرباز داشته باشی.");
+                    else if (upgradeLevel === 0) await typePrint("\r\n🔒 اول باید Upgrade 1 رو بخری!");
+                    else if (upgradeLevel >= 3) await typePrint("\r\n❌ Upgrade 3 قبلاً خریداری شده.");
+                    else if (coins < 40) await typePrint("\r\n❌ Coin کافی نداری!");
+                    else {
+                        coins -= 40; upgradeLevel = 3;
+                        soldiers.forEach(s => { s.damage += 20; s.max_hp += 40; s.hp += 40; });
+                        await typePrint("\r\n🔥 Upgrade 3 فعال شد!");
+                    }
+                } else if (choice === "4") break;
+            }
+        }
+
+        async function mainLoop() {
+            while (level <= 3) {
+                castleHp = maxCastleHp;
+                let totalZombies = 5 + ((level - 1) * 3);
+                let zombiesKilled = 0;
+
+                while (true) {
+                    clearTerm();
+                    term.write(`🏰 LEVEL ${level} | 🧟 زامبی‌ها: ${totalZombies}\r\n💰 Coin: ${coins} | 🪖 سربازها: ${soldiers.length}\r\n\r\n`);
+                    term.write("1) 🏪 فروشگاه (shop)\r\n2) 📊 وضعیت (status)\r\n3) ⚔️ شروع جنگ (start)\r\n");
+                    let cmd = await readInput("\r\n🎮 دستور: ");
+                    if (["1", "shop", "فروشگاه"].includes(cmd)) await shop();
+                    else if (["3", "start", "شروع"].includes(cmd)) break;
+                }
+
+                while (zombiesKilled < totalZombies && castleHp > 0) {
+                    let zMaxHp = 60 + ((level - 1) * 25);
+                    let zHp = zMaxHp;
+                    let baseDmg = 12 + ((level - 1) * 6);
+
+                    while (zHp > 0 && castleHp > 0) {
+                        if (soldiers.length === 0) {
+                            let dmg = Math.floor(Math.random() * 11) + 15;
+                            castleHp = Math.max(0, castleHp - dmg);
+                            await typePrint(`\r\n🧟💥 زامبی به قلعه زد! -${dmg} HP`);
+                            break;
+                        }
+                        let totalDmg = soldiers.reduce((a, b) => a + b.damage, 0);
+                        zHp = Math.max(0, zHp - totalDmg);
+                        await typePrint(`\r\n💥 آسیب وارد شده: ${totalDmg} | 🧟 زامبی HP: ${zHp}`);
+
+                        if (zHp <= 0) {
+                            let reward = Math.floor(Math.random() * 4) + 2;
+                            coins += reward;
+                            await typePrint(`🎉 زامبی نابود شد! +${reward} Coin`);
+                            break;
+                        }
+
+                        let targetIdx = Math.floor(Math.random() * soldiers.length);
+                        let target = soldiers[targetIdx];
+                        let dmg = Math.floor(Math.random() * 9) + (baseDmg - 4);
+                        target.hp = Math.max(0, target.hp - dmg);
+                        await typePrint(`🎯 زامبی به Soldier ${targetIdx + 1} ضربه زد! -${dmg} HP`);
+
+                        if (target.hp <= 0) {
+                            await typePrint(`💀 Soldier ${targetIdx + 1} کشته شد!`);
+                            soldiers.splice(targetIdx, 1);
+                        }
+                    }
+
+                    if (castleHp <= 0) {
+                        await typePrint("\r\n💥 قلعه سقوط کرد! باختی.");
+                        coins = 20; soldiers = []; upgradeLevel = 0; level = 1;
+                        break;
+                    }
+
+                    zombiesKilled++;
+                    if (zombiesKilled < totalZombies) {
+                        let nextPrompt = await readInput(`\r\n✅ زامبی ${zombiesKilled}/${totalZombies} نابود شد. Enter برای بعدی (یا shop): `);
+                        if (["shop", "فروشگاه"].includes(nextPrompt)) await shop();
+                    }
+                }
+
+                if (castleHp > 0) {
+                    await typePrint(`\r\n🎉 LEVEL ${level} COMPLETE! +50 Coin`);
+                    coins += 50;
+                    level++;
+                }
+            }
+            await typePrint(`\r\n🏆 تبریک ${playerName}! بازی رو تموم کردی! 🔥`);
+        }
+
+        startGame();
+    </script>
+</body>
+</html>
