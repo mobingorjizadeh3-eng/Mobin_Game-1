@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOBIN GAME - REAL PIXEL ART</title>
+    <title>MOBIN GAME BETA 0.4.2 - ULTIMATE GRAPHICS</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body {
             background-color: #0b0f19;
             color: #f8fafc;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -19,7 +19,7 @@
             overflow-x: hidden;
         }
 
-        /* --- MAIN MENU (LOBBY) --- */
+        /* --- MAIN MENU UI --- */
         #main-menu {
             background: rgba(30, 41, 59, 0.95);
             border: 2px solid #38bdf8;
@@ -32,11 +32,19 @@
             animation: fadeIn 0.4s ease-out;
         }
 
-        h1 { font-size: 2.2rem; color: #38bdf8; margin-bottom: 8px; text-shadow: 0 0 12px rgba(56, 189, 248, 0.5); }
+        h1 {
+            font-size: 2.2rem;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+            word-wrap: break-word;
+        }
+
         p.subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
+
         .menu-btn-group { display: flex; flex-direction: column; gap: 12px; }
 
-        /* --- GAME VIEW --- */
+        /* --- GAME CONTAINER --- */
         #game-view {
             display: none;
             width: 100%;
@@ -50,38 +58,48 @@
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 16px;
-            padding: 15px;
+            padding: 20px;
             width: 100%;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
         }
 
+        /* Top HUD */
         .hud {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
             background: #0f172a;
             border: 1px solid #334155;
-            padding: 10px 15px;
+            padding: 12px 16px;
             border-radius: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            gap: 10px;
             font-size: 0.9rem;
             font-weight: bold;
         }
 
-        #gameCanvas {
+        .hud span { display: flex; align-items: center; gap: 6px; }
+
+        /* Game Arena Canvas */
+        #canvas-container {
+            position: relative;
             width: 100%;
-            height: 380px;
-            background: #000;
+            height: 320px;
+            background: linear-gradient(to bottom, #0f172a 0%, #1e1b4b 50%, #14532d 50%, #064e3b 100%);
             border-radius: 12px;
             border: 2px solid #475569;
-            display: block;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
         }
 
+        /* Control Panel Buttons */
         .controls {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 10px;
-            margin-top: 12px;
+            margin-top: 10px;
         }
 
         .btn {
@@ -89,19 +107,87 @@
             color: white;
             border: none;
             padding: 12px 8px;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             font-weight: bold;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            word-wrap: break-word;
         }
 
-        .btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); }
+        .btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4); }
         .btn:disabled { background: #334155; color: #64748b; opacity: 0.6; cursor: not-allowed; }
         .btn-danger { background: #dc2626; }
-        .btn-fire { background: #d97706; }
+        .btn-danger:hover:not(:disabled) { background: #b91c1c; }
         .btn-secondary { background: #334155; }
+        .btn-secondary:hover:not(:disabled) { background: #475569; }
+
+        /* Fixed Log Box Area */
+        #log-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 12px;
+            height: 90px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            text-align: right;
+            color: #38bdf8;
+            margin-top: 12px;
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* Animated Sprites */
+        .sprite {
+            position: absolute;
+            bottom: 50px;
+            font-size: 42px;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .hp-bar-outer {
+            width: 44px;
+            height: 6px;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .hp-bar-inner {
+            height: 100%;
+            background: #22c55e;
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Animation Keyframes */
+        .attack-effect { animation: attackAnim 0.3s ease; }
+        .hit-effect { animation: hitAnim 0.3s ease; }
+
+        @keyframes attackAnim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3) translateX(-10px); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes hitAnim {
+            0%, 100% { transform: translateX(0); filter: none; }
+            25% { transform: translateX(-8px); filter: drop-shadow(0 0 8px red); }
+            75% { transform: translateX(8px); filter: drop-shadow(0 0 8px red); }
+        }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
@@ -111,249 +197,255 @@
 </head>
 <body>
 
-    <!-- LOBBY (UNTOUCHED) -->
+    <!-- ================= MAIN MENU ================= -->
     <div id="main-menu">
         <h1>🏰 MOBIN GAME</h1>
-        <p class="subtitle">نسخه گرافیک پیکسل‌آرت واقعی (GRAPHIC ENGINE V3)</p>
+        <p class="subtitle">نسخه گرافیکی پیشرفته (BETA 0.4.2)</p>
+
         <div class="menu-btn-group">
             <button class="btn" onclick="startGameView()">🎮 شروع بازی</button>
-            <button class="btn btn-secondary" onclick="alert('📜 راهنما:\n1. سرباز و کماندار اضافه کنید.\n2. با گلوله آتشین زامبی‌ها را خاکستر کنید!')">📜 راهنما</button>
-            <button class="btn btn-secondary" onclick="alert('مبین گرجی‌زاده')">ℹ️ درباره سازنده</button>
+            <button class="btn btn-secondary" onclick="alert('📜 راهنما:\n\n1. از فروشگاه سرباز بگیرید تا از قلعه دفاع کنند.\n2. با خرج کردن سکه، سربازها را ارتقا دهید.\n3. زامبی‌ها به صورت موجی حمله می‌کنند، اجازه ندهید به قلعه برسند!')">📜 راهنمای بازی</button>
+            <button class="btn btn-secondary" onclick="alert('ℹ️ درباره بازی:\nطراحی و توسعه توسط: مبین گرجی‌زاده\nنسخه: Beta 0.4.2 (Graphical Engine)')">ℹ️ درباره سازنده</button>
         </div>
     </div>
 
-    <!-- GAME PLAY -->
+    <!-- ================= GAME PLAY VIEW ================= -->
     <div id="game-view">
         <div class="card">
+            <!-- HUD Status -->
             <div class="hud">
-                <span>🎯 موج: <span id="wave-txt" style="color:#38bdf8;">1</span></span>
-                <span>💰 طلا: <span id="coin-txt" style="color:#facc15;">100</span></span>
-                <span>💧 مانا: <span id="mana-txt" style="color:#60a5fa;">100</span></span>
-                <span>🏰 قلعه: <span id="castle-hp" style="color:#4ade80;">500</span></span>
-                <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.75rem;" onclick="location.reload()">🏠 منو</button>
+                <span>🎯 مرحله: <span id="lvl-txt" style="color:#38bdf8;">1</span></span>
+                <span>💰 سکه: <span id="coin-txt" style="color:#facc15;">20</span></span>
+                <span>🏰 قلعه: <span id="castle-hp" style="color:#4ade80;">100</span>/100</span>
+                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="returnToMenu()">🏠 منو</button>
             </div>
 
-            <canvas id="gameCanvas" width="750" height="380"></canvas>
+            <!-- Visual Canvas Arena -->
+            <div id="canvas-container">
+                <!-- Castle -->
+                <div class="sprite" style="right: 15px; bottom: 45px;" id="castle-sprite">
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" id="castle-hp-bar"></div></div>
+                    🏰
+                </div>
 
+                <!-- Soldiers Container -->
+                <div id="soldiers-area" style="position: absolute; right: 90px; bottom: 50px; display: flex; gap: 6px; z-index: 2;"></div>
+
+                <!-- Zombie Sprite -->
+                <div class="sprite" id="zombie-sprite" style="left: -80px; bottom: 50px;">
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" id="zombie-hp-bar"></div></div>
+                    🧟
+                </div>
+            </div>
+
+            <!-- Log Info Area (Fixed Scroll & No Overflow) -->
+            <div id="log-box">به Mobin Game خوش آمدید! با زدن دکمه خرید سرباز، اولین مدافع خود را بسازید.</div>
+
+            <!-- Control Buttons -->
             <div class="controls">
-                <button class="btn" id="btn-archer" onclick="buyArcher()">🏹 کماندار (30💰)</button>
-                <button class="btn" id="btn-knight" onclick="buyKnight()">🗡️ شوالیه (40💰)</button>
-                <button class="btn btn-fire" id="btn-fireball" onclick="castFireball()">🔥 گلوله آتشین (50💧)</button>
-                <button class="btn btn-danger" id="btn-wave" onclick="startNextWave()">⚔️ شروع موج</button>
+                <button class="btn" id="btn-buy" onclick="buySoldier()">🪖 خرید سرباز (10💰)</button>
+                <button class="btn" id="btn-up1" onclick="upgrade1()">⬆️ ارتقا ۱ (16💰)</button>
+                <button class="btn" id="btn-up3" onclick="upgrade3()">🔥 ارتقا ۳ (40💰)</button>
+                <button class="btn btn-danger" id="btn-fight" onclick="startBattle()">⚔️ شروع نبرد</button>
             </div>
         </div>
     </div>
 
     <script>
-        // --- ASSET LOADER (REAL PIXEL ART IMAGES) ---
-        const images = {};
-        const sources = {
-            bg: 'https://img.freepik.com/free-vector/pixel-art-game-background-grass-ground-sky_107791-23653.jpg',
-            castle: 'https://cdn-icons-png.flaticon.com/512/2822/2822432.png',
-            knight: 'https://cdn-icons-png.flaticon.com/512/1066/1066371.png',
-            archer: 'https://cdn-icons-png.flaticon.com/512/3408/3408545.png',
-            zombie: 'https://cdn-icons-png.flaticon.com/512/1066/1066388.png',
-            fireball: 'https://cdn-icons-png.flaticon.com/512/785/785116.png'
-        };
+        // --- GAME STATE ---
+        let coins = 20;
+        let level = 1;
+        let castleHp = 100;
+        let maxCastleHp = 100;
+        let upgradeLevel = 0;
+        let soldiers = [];
+        let isFighting = false;
 
-        let loadedCount = 0;
-        const totalSources = Object.keys(sources).length;
-
-        for (let src in sources) {
-            images[src] = new Image();
-            images[src].crossOrigin = "Anonymous";
-            images[src].src = sources[src];
-            images[src].onload = () => {
-                loadedCount++;
-            };
-        }
-
-        // --- GAME VARIABLES ---
-        let gold = 100, mana = 100, wave = 1, castleHp = 500, maxCastleHp = 500, inBattle = false;
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        let archers = [{ x: 630, y: 130 }, { x: 670, y: 130 }];
-        let knights = [];
-        let zombies = [];
-        let arrows = [];
-        let fireballs = [];
-        let floatingTexts = [];
+        // --- DOM REFERENCES ---
+        const coinTxt = document.getElementById('coin-txt');
+        const lvlTxt = document.getElementById('lvl-txt');
+        const castleHpTxt = document.getElementById('castle-hp');
+        const castleHpBar = document.getElementById('castle-hp-bar');
+        const logBox = document.getElementById('log-box');
+        const soldiersArea = document.getElementById('soldiers-area');
+        const zombieSprite = document.getElementById('zombie-sprite');
+        const zombieHpBar = document.getElementById('zombie-hp-bar');
+        const castleSprite = document.getElementById('castle-sprite');
 
         function startGameView() {
             document.getElementById('main-menu').style.display = 'none';
             document.getElementById('game-view').style.display = 'flex';
-            requestAnimationFrame(gameLoop);
             updateUI();
+        }
+
+        function returnToMenu() {
+            if (isFighting) {
+                if (!confirm("نبرد در جریان است! آیا مطمئن هستید می‌خواهید خارج شوید؟")) return;
+            }
+            location.reload();
+        }
+
+        function log(msg) {
+            logBox.innerHTML = `> ${msg}\n` + logBox.innerHTML;
         }
 
         function updateUI() {
-            document.getElementById('coin-txt').innerText = gold;
-            document.getElementById('mana-txt').innerText = Math.floor(mana);
-            document.getElementById('wave-txt').innerText = wave;
-            document.getElementById('castle-hp').innerText = Math.max(0, Math.floor(castleHp));
-            document.getElementById('btn-archer').disabled = gold < 30;
-            document.getElementById('btn-knight').disabled = gold < 40;
-            document.getElementById('btn-fireball').disabled = mana < 50;
-            document.getElementById('btn-wave').disabled = inBattle;
+            coinTxt.innerText = coins;
+            lvlTxt.innerText = level;
+            castleHpTxt.innerText = castleHp;
+            castleHpBar.style.width = `${Math.max(0, (castleHp / maxCastleHp) * 100)}%`;
+
+            // Render Soldiers
+            soldiersArea.innerHTML = '';
+            soldiers.forEach((s, i) => {
+                const sEl = document.createElement('div');
+                sEl.className = 'sprite';
+                sEl.style.position = 'relative';
+                sEl.style.bottom = '0';
+                sEl.innerHTML = `
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" style="width:${Math.max(0, (s.hp/s.max_hp)*100)}%"></div></div>
+                    🪖
+                `;
+                soldiersArea.appendChild(sEl);
+            });
+
+            // Button Control Lock
+            document.getElementById('btn-buy').disabled = isFighting || coins < 10;
+            document.getElementById('btn-up1').disabled = isFighting || upgradeLevel >= 1 || coins < 16 || soldiers.length === 0;
+            document.getElementById('btn-up3').disabled = isFighting || upgradeLevel !== 1 || coins < 40;
+            document.getElementById('btn-fight').disabled = isFighting;
         }
 
-        function buyArcher() {
-            if (gold >= 30) {
-                gold -= 30;
-                archers.push({ x: 600 + (archers.length * 15 % 70), y: 130 });
+        function buySoldier() {
+            if (coins >= 10) {
+                coins -= 10;
+                let dmg = 12 + (upgradeLevel >= 1 ? 8 : 0) + (upgradeLevel >= 3 ? 20 : 0);
+                let mhp = 100 + (upgradeLevel >= 1 ? 20 : 0) + (upgradeLevel >= 3 ? 40 : 0);
+                soldiers.push({ hp: mhp, max_hp: mhp, damage: dmg });
+                log(`یک سرباز جدید اضافه شد! (تعداد: ${soldiers.length})`);
                 updateUI();
             }
         }
 
-        function buyKnight() {
-            if (gold >= 40) {
-                gold -= 40;
-                knights.push({ x: 500 - (knights.length * 20), y: 280, hp: 120, maxHp: 120 });
+        function upgrade1() {
+            if (coins >= 16 && upgradeLevel === 0 && soldiers.length > 0) {
+                coins -= 16;
+                upgradeLevel = 1;
+                soldiers.forEach(s => { s.damage += 8; s.max_hp += 20; s.hp += 20; });
+                log("⬆️ ارتقای ۱ فعال شد! قدرت و سلامت سربازان افزایش یافت.");
                 updateUI();
             }
         }
 
-        function castFireball() {
-            if (mana >= 50) {
-                mana -= 50;
-                fireballs.push({ x: 650, y: 100, targetX: 250, targetY: 290, speed: 8 });
+        function upgrade3() {
+            if (coins >= 40 && upgradeLevel === 1) {
+                coins -= 40;
+                upgradeLevel = 3;
+                soldiers.forEach(s => { s.damage += 20; s.max_hp += 40; s.hp += 40; });
+                log("🔥 ارتقای ۳ فعال شد! سربازان تبدیل به نیروی ویژه شدند.");
                 updateUI();
             }
         }
 
-        function startNextWave() {
-            inBattle = true;
-            let count = 4 + wave * 2;
-            let spawned = 0;
-
-            let interval = setInterval(() => {
-                zombies.push({
-                    x: -40, y: 280,
-                    hp: 70 + (wave * 20), maxHp: 70 + (wave * 20),
-                    speed: 0.8 + Math.random() * 0.4
-                });
-                spawned++;
-                if (spawned >= count) clearInterval(interval);
-            }, 1000);
+        async function startBattle() {
+            isFighting = true;
             updateUI();
-        }
 
-        function addText(x, y, txt, color) {
-            floatingTexts.push({ x, y, txt, color, alpha: 1 });
-        }
+            let totalZombies = 5 + ((level - 1) * 3);
+            log(`⚔️ نبرد مرحله ${level} شروع شد! زامبی‌های پیش‌رو: ${totalZombies}`);
 
-        let lastShoot = 0;
+            for (let z = 1; z <= totalZombies; z++) {
+                if (castleHp <= 0) break;
 
-        function gameLoop(timestamp) {
-            if (mana < 100) { mana = Math.min(100, mana + 0.05); updateUI(); }
+                let zMaxHp = 60 + ((level - 1) * 25);
+                let zHp = zMaxHp;
+                let baseDmg = 12 + ((level - 1) * 6);
 
-            // Draw Real Background
-            if (images.bg.complete) {
-                ctx.drawImage(images.bg, 0, 0, canvas.width, canvas.height);
-            } else {
-                ctx.fillStyle = '#1e1b4b'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            }
+                // Zombie Approach
+                zombieSprite.style.left = '70px';
+                zombieHpBar.style.width = '100%';
+                log(`🧟 زامبی شماره ${z} داره نزدیک میشه!`);
+                await new Promise(r => setTimeout(r, 700));
 
-            // Draw Real Castle Sprite
-            if (images.castle.complete) {
-                ctx.drawImage(images.castle, 560, 100, 180, 200);
-            }
+                while (zHp > 0 && castleHp > 0) {
+                    if (soldiers.length === 0) {
+                        // Zombie Hits Castle
+                        zombieSprite.classList.add('attack-effect');
+                        castleSprite.classList.add('hit-effect');
+                        let dmg = Math.floor(Math.random() * 11) + 15;
+                        castleHp = Math.max(0, castleHp - dmg);
+                        log(`💥 زامبی مستقیم به قلعه زد! (-${dmg} HP)`);
+                        updateUI();
 
-            // Draw Real Archer Sprites
-            archers.forEach(a => {
-                if (images.archer.complete) ctx.drawImage(images.archer, a.x, a.y, 35, 35);
-            });
+                        await new Promise(r => setTimeout(r, 500));
+                        zombieSprite.classList.remove('attack-effect');
+                        castleSprite.classList.remove('hit-effect');
+                        break;
+                    } else {
+                        // Soldiers Attack Zombie
+                        let totalDmg = soldiers.reduce((acc, s) => acc + s.damage, 0);
+                        zHp = Math.max(0, zHp - totalDmg);
+                        zombieHpBar.style.width = `${Math.max(0, (zHp / zMaxHp) * 100)}%`;
+                        
+                        // Attack Animation
+                        soldiersArea.classList.add('attack-effect');
+                        zombieSprite.classList.add('hit-effect');
+                        log(`⚔️ سربازها هجوم بردند! (${totalDmg} آسیب به زامبی)`);
 
-            // Shoot Arrows
-            if (timestamp - lastShoot > 1100 && zombies.length > 0) {
-                lastShoot = timestamp;
-                archers.forEach(a => {
-                    arrows.push({ x: a.x, y: a.y, targetX: zombies[0].x, targetY: zombies[0].y, speed: 8 });
-                });
-            }
+                        await new Promise(r => setTimeout(r, 500));
+                        soldiersArea.classList.remove('attack-effect');
+                        zombieSprite.classList.remove('hit-effect');
 
-            // Arrows Movement
-            for (let i = arrows.length - 1; i >= 0; i--) {
-                let arr = arrows[i];
-                let dx = arr.targetX - arr.x, dy = arr.targetY - arr.y;
-                let dist = Math.hypot(dx, dy);
+                        if (zHp <= 0) {
+                            let reward = Math.floor(Math.random() * 4) + 2;
+                            coins += reward;
+                            log(`🎉 زامبی نابود شد! +${reward} سکه پاداش گرفتی.`);
+                            zombieSprite.style.left = '-80px';
+                            updateUI();
+                            await new Promise(r => setTimeout(r, 500));
+                            break;
+                        }
 
-                if (dist < 10) {
-                    if (zombies.length > 0) {
-                        zombies[0].hp -= 20;
-                        addText(zombies[0].x, zombies[0].y - 10, "-20", "#ef4444");
-                        if (zombies[0].hp <= 0) { gold += 10; zombies.shift(); }
+                        // Zombie Counter-Attacks
+                        let targetIdx = Math.floor(Math.random() * soldiers.length);
+                        let target = soldiers[targetIdx];
+                        let dmg = Math.floor(Math.random() * 9) + (baseDmg - 4);
+                        target.hp = Math.max(0, target.hp - dmg);
+                        
+                        zombieSprite.classList.add('attack-effect');
+                        log(`🧟 زامبی ضدحمله زد! سرباز ${targetIdx + 1} آسیب دید (-${dmg} HP)`);
+
+                        await new Promise(r => setTimeout(r, 500));
+                        zombieSprite.classList.remove('attack-effect');
+
+                        if (target.hp <= 0) {
+                            log(`💀 سرباز شماره ${targetIdx + 1} از پا درآمد!`);
+                            soldiers.splice(targetIdx, 1);
+                        }
+                        updateUI();
+                        await new Promise(r => setTimeout(r, 500));
                     }
-                    arrows.splice(i, 1);
-                    updateUI();
-                } else {
-                    arr.x += (dx / dist) * arr.speed; arr.y += (dy / dist) * arr.speed;
-                    ctx.fillStyle = '#fde047'; ctx.fillRect(arr.x, arr.y, 4, 4);
                 }
             }
 
-            // Fireball Effect
-            for (let i = fireballs.length - 1; i >= 0; i--) {
-                let fb = fireballs[i];
-                let dx = fb.targetX - fb.x, dy = fb.targetY - fb.y;
-                let dist = Math.hypot(dx, dy);
-
-                if (dist < 10) {
-                    zombies.forEach(z => {
-                        z.hp -= 80;
-                        addText(z.x, z.y - 15, "-80 FIRE!", "#f97316");
-                    });
-                    zombies = zombies.filter(z => z.hp > 0);
-                    fireballs.splice(i, 1);
-                    updateUI();
-                } else {
-                    fb.x += (dx / dist) * fb.speed; fb.y += (dy / dist) * fb.speed;
-                    if (images.fireball.complete) ctx.drawImage(images.fireball, fb.x, fb.y, 40, 40);
+            if (castleHp <= 0) {
+                log("💥 قلعه سقوط کرد! بازی دوباره از لول ۱ شروع می‌شود.");
+                alert("💔 باختی! قلعه سقوط کرد.");
+                coins = 20; soldiers = []; upgradeLevel = 0; level = 1; castleHp = maxCastleHp;
+            } else {
+                log(`🎉 مرحله ${level} با موفقیت فتح شد! +50 سکه جایزه.`);
+                coins += 50;
+                level++;
+                castleHp = maxCastleHp;
+                if (level > 3) {
+                    alert("🏆 تبریک! شما تمام مراحل Mobin Game را فتح کردید!");
+                    level = 1;
                 }
             }
 
-            // Knights Render
-            knights.forEach(k => {
-                if (images.knight.complete) ctx.drawImage(images.knight, k.x, k.y, 40, 40);
-            });
-
-            // Zombies Render & Fighting
-            for (let i = zombies.length - 1; i >= 0; i--) {
-                let z = zombies[i];
-                let knight = knights.find(k => Math.abs(k.x - z.x) < 25);
-
-                if (knight) {
-                    knight.hp -= 0.3; z.hp -= 0.4;
-                    if (knight.hp <= 0) knights = knights.filter(k => k !== knight);
-                } else if (z.x < 550) {
-                    z.x += z.speed;
-                } else {
-                    castleHp -= 0.2;
-                    updateUI();
-                }
-
-                if (images.zombie.complete) ctx.drawImage(images.zombie, z.x, z.y, 40, 40);
-
-                // Health Bar
-                ctx.fillStyle = '#1e293b'; ctx.fillRect(z.x, z.y - 8, 35, 4);
-                ctx.fillStyle = '#ef4444'; ctx.fillRect(z.x, z.y - 8, (z.hp / z.maxHp) * 35, 4);
-            }
-
-            // Floating Texts
-            floatingTexts.forEach((ft, idx) => {
-                ft.y -= 0.8; ft.alpha -= 0.02;
-                ctx.fillStyle = ft.color; ctx.font = 'bold 13px sans-serif';
-                ctx.fillText(ft.txt, ft.x, ft.y);
-                if (ft.alpha <= 0) floatingTexts.splice(idx, 1);
-            });
-
-            // Wave Check
-            if (inBattle && zombies.length === 0) {
-                inBattle = false; wave++; gold += 40; updateUI();
-            }
-
-            requestAnimationFrame(gameLoop);
+            zombieSprite.style.left = '-80px';
+            isFighting = false;
+            updateUI();
         }
     </script>
 </body>
