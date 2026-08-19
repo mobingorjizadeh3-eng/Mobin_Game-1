@@ -3,19 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOBIN GAME BETA 0.4.2</title>
-
-    <!-- Xterm.js & Fit Addon -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
-    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
-
+    <title>MOBIN GAME BETA 0.4.2 - GRAPHICAL EDITION</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body {
             background-color: #0f172a;
             color: #f8fafc;
@@ -28,387 +18,347 @@
             padding: 15px;
         }
 
-        /* --- UI Card Container --- */
         .card {
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 16px;
-            padding: 30px;
+            padding: 25px;
             width: 100%;
-            max-width: 500px;
+            max-width: 750px;
             text-align: center;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            animation: fadeIn 0.4s ease-in-out;
         }
 
-        h1 {
-            font-size: 2.2rem;
-            color: #38bdf8;
-            margin-bottom: 8px;
-            text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+        h1 { color: #38bdf8; margin-bottom: 5px; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
+        .subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px; }
+
+        /* Game Canvas Container */
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            background: linear-gradient(to bottom, #1e1b4b, #311b92 60%, #15803d 60%, #166534 100%);
+            border-radius: 12px;
+            border: 2px solid #475569;
+            overflow: hidden;
+            margin-bottom: 15px;
         }
 
-        p.subtitle {
-            color: #94a3b8;
-            font-size: 0.95rem;
-            margin-bottom: 25px;
-        }
-
-        /* --- Menu Buttons --- */
-        .btn-group {
+        /* Top HUD */
+        .hud {
             display: flex;
-            flex-direction: column;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
+        .hud span { display: flex; align-items: center; gap: 5px; }
+
+        /* Control Panel / Buttons */
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .btn {
             background: #2563eb;
             color: white;
             border: none;
-            padding: 14px 20px;
-            font-size: 1.05rem;
+            padding: 12px 10px;
+            font-size: 0.9rem;
             font-weight: bold;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); }
+        .btn:disabled { background: #475569; opacity: 0.6; cursor: not-allowed; }
+        .btn-danger { background: #dc2626; }
+        .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+        .btn-success { background: #16a34a; }
+        .btn-success:hover:not(:disabled) { background: #15803d; }
+
+        /* Message Log */
+        #log-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+            height: 80px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            text-align: right;
+            color: #38bdf8;
+            margin-top: 12px;
+        }
+
+        /* Elements inside Canvas */
+        .sprite {
+            position: absolute;
+            bottom: 60px;
+            font-size: 45px;
+            transition: all 0.3s ease;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .btn:hover {
-            background: #1d4ed8;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
-        }
-
-        .btn-secondary {
-            background: #334155;
-            color: #f1f5f9;
-        }
-
-        .btn-secondary:hover {
-            background: #475569;
-            box-shadow: 0 4px 12px rgba(51, 65, 85, 0.4);
-        }
-
-        /* --- Terminal View --- */
-        #game-view {
-            display: none;
-            width: 100%;
-            max-width: 850px;
             flex-direction: column;
             align-items: center;
         }
 
-        #terminal-container {
-            width: 100%;
-            height: 520px;
-            background: #000;
-            padding: 10px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            border: 1px solid #334155;
+        .hp-bar-outer {
+            width: 40px;
+            height: 6px;
+            background: #475569;
+            border-radius: 3px;
             overflow: hidden;
+            margin-bottom: 4px;
         }
 
-        .top-bar {
+        .hp-bar-inner {
+            height: 100%;
+            background: #22c55e;
             width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            transition: width 0.2s;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
+        .hit-effect {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
         }
     </style>
 </head>
 <body>
 
-    <!-- ================= MAIN MENU ================= -->
-    <div id="main-menu" class="card">
+    <div class="card">
         <h1>🏰 MOBIN GAME</h1>
-        <p class="subtitle">نسخه آزمایشی (BETA 0.4.2)</p>
+        <p class="subtitle">نسخه گرافیکی اختصاصی (Graphic Beta 0.4.2)</p>
 
-        <div class="btn-group">
-            <button class="btn" onclick="launchGame()">🎮 شروع بازی</button>
-            <button class="btn btn-secondary" onclick="showModal('راهنما', 'توی این بازی باید با خرید سرباز و ارتقای اون‌ها از قلعه در برابر حمله زامبی‌ها دفاع کنی!\n\nهر مرحله زامبی‌های قوی‌تری داره. سکه‌هات رو هوشمندانه خرج کن!')">📜 راهنمای بازی</button>
-            <button class="btn btn-secondary" onclick="showModal('درباره بازی', 'توسعه داده شده توسط مبین گرجی‌زاده\nنسخه: Beta 0.4.2\nزبان برنامه نویسی: Python / Web JavaScript')">ℹ️ درباره سازنده</button>
+        <!-- HUD Status -->
+        <div class="hud">
+            <span>👤 <span id="p-name">بازیکن</span></span>
+            <span>🎯 مرحله: <span id="lvl-txt">1</span></span>
+            <span>💰 سکه: <span id="coin-txt">20</span></span>
+            <span>🏰 قلعه: <span id="castle-hp">100</span>/100</span>
         </div>
-    </div>
 
-    <!-- ================= GAME TERMINAL VIEW ================= -->
-    <div id="game-view">
-        <div class="top-bar">
-            <h3 style="color: #38bdf8;">🏰 MOBIN GAME TERMINAL</h3>
-            <button class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem;" onclick="returnToMenu()">🏠 بازگشت به منو</button>
+        <!-- Visual Canvas Arena -->
+        <div id="canvas-container">
+            <!-- Castle -->
+            <div class="sprite" style="right: 20px; bottom: 50px;" id="castle-sprite">
+                <div class="hp-bar-outer"><div class="hp-bar-inner" id="castle-hp-bar"></div></div>
+                🏰
+            </div>
+
+            <!-- Soldiers Container -->
+            <div id="soldiers-area" style="position: absolute; right: 100px; bottom: 55px; display: flex; gap: 8px;"></div>
+
+            <!-- Zombie Sprite -->
+            <div class="sprite" id="zombie-sprite" style="left: -80px; bottom: 55px;">
+                <div class="hp-bar-outer"><div class="hp-bar-inner" id="zombie-hp-bar"></div></div>
+                🧟
+            </div>
         </div>
-        <div id="terminal-container"></div>
+
+        <!-- Log Info -->
+        <div id="log-box">به بازی مبین گیم خوش آمدید! برای شروع از فروشگاه سرباز بگیرید یا نبرد رو شروع کنید.</div>
+
+        <!-- Buttons Controls -->
+        <div class="controls">
+            <button class="btn" id="btn-buy" onclick="buySoldier()">🪖 خرید سرباز (10💰)</button>
+            <button class="btn" id="btn-up1" onclick="upgrade1()">⬆️ ارتقا ۱ (16💰)</button>
+            <button class="btn" id="btn-up3" onclick="upgrade3()">🔥 ارتقا ۳ (40💰)</button>
+            <button class="btn btn-danger" id="btn-fight" onclick="startBattle()">⚔️ شروع نبرد</button>
+        </div>
     </div>
 
     <script>
-        let term, fitAddon;
-        let isGameRunning = false;
+        // --- GAME VARIABLES ---
+        let coins = 20;
+        let level = 1;
+        let castleHp = 100;
+        let maxCastleHp = 100;
+        let upgradeLevel = 0;
+        let soldiers = [];
+        let isFighting = false;
 
-        function showModal(title, text) {
-            alert(`${title}\n\n${text}`);
+        // --- DOM ELEMENTS ---
+        const coinTxt = document.getElementById('coin-txt');
+        const lvlTxt = document.getElementById('lvl-txt');
+        const castleHpTxt = document.getElementById('castle-hp');
+        const castleHpBar = document.getElementById('castle-hp-bar');
+        const logBox = document.getElementById('log-box');
+        const soldiersArea = document.getElementById('soldiers-area');
+        const zombieSprite = document.getElementById('zombie-sprite');
+        const zombieHpBar = document.getElementById('zombie-hp-bar');
+        const castleSprite = document.getElementById('castle-sprite');
+
+        function log(msg) {
+            logBox.innerHTML = `> ${msg}<br>` + logBox.innerHTML;
         }
 
-        function launchGame() {
-            document.getElementById('main-menu').style.display = 'none';
-            document.getElementById('game-view').style.display = 'flex';
+        function updateUI() {
+            coinTxt.innerText = coins;
+            lvlTxt.innerText = level;
+            castleHpTxt.innerText = castleHp;
+            castleHpBar.style.width = `${(castleHp / maxCastleHp) * 100}%`;
 
-            if (!term) {
-                initTerminal();
-            } else {
-                term.clear();
-            }
-            
-            if (!isGameRunning) {
-                isGameRunning = true;
-                startGame();
-            }
-        }
-
-        function returnToMenu() {
-            if (confirm("آیا می‌خواهی از بازی خارج بشی و به منو برگردی؟")) {
-                location.reload(); // ریست کامل بازی برای بازگشت به منو
-            }
-        }
-
-        function initTerminal() {
-            term = new Terminal({
-                cursorBlink: true,
-                fontSize: 14,
-                fontFamily: 'monospace',
-                theme: { background: '#000000', foreground: '#00ff66' },
-                convertEol: true,
-                wordWrap: true
+            // Update Soldiers Render
+            soldiersArea.innerHTML = '';
+            soldiers.forEach((s, i) => {
+                const sEl = document.createElement('div');
+                sEl.className = 'sprite';
+                sEl.style.position = 'relative';
+                sEl.style.bottom = '0';
+                sEl.innerHTML = `
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" style="width:${(s.hp/s.max_hp)*100}%"></div></div>
+                    🪖
+                `;
+                soldiersArea.appendChild(sEl);
             });
 
-            fitAddon = new FitAddon.FitAddon();
-            term.loadAddon(fitAddon);
-            term.open(document.getElementById('terminal-container'));
-            fitAddon.fit();
-
-            window.addEventListener('resize', () => fitAddon.fit());
-
-            term.onData(e => {
-                if (e === '\r') { 
-                    term.write('\r\n');
-                    if (inputResolver) {
-                        let res = inputResolver;
-                        inputResolver = null;
-                        res(inputBuffer.trim());
-                    }
-                    inputBuffer = "";
-                } else if (e === '\u007F') { 
-                    if (inputBuffer.length > 0) {
-                        inputBuffer = inputBuffer.slice(0, -1);
-                        term.write('\b \b');
-                    }
-                } else {
-                    inputBuffer += e;
-                    term.write(e);
-                }
-            });
+            // Disable buttons if fighting
+            document.getElementById('btn-buy').disabled = isFighting || coins < 10;
+            document.getElementById('btn-up1').disabled = isFighting || upgradeLevel >= 1 || coins < 16 || soldiers.length === 0;
+            document.getElementById('btn-up3').disabled = isFighting || upgradeLevel !== 1 || coins < 40;
+            document.getElementById('btn-fight').disabled = isFighting;
         }
 
-        let inputBuffer = "";
-        let inputResolver = null;
-
-        function readInput(promptText) {
-            if (promptText) term.write(promptText);
-            return new Promise(resolve => { inputResolver = resolve; });
-        }
-
-        async function typePrint(text, speed = 10) {
-            for (let char of text) {
-                term.write(char);
-                await new Promise(r => setTimeout(r, speed));
-            }
-            term.write('\r\n');
-        }
-
-        function clearTerm() { term.clear(); }
-
-        // --- GAME ENGINE LOGIC ---
-        let coins = 20, level = 1, castleHp = 100, maxCastleHp = 100, upgradeLevel = 0;
-        let soldiers = [], playerName = "", lang = "fa";
-
-        async function startGame() {
-            term.write("╔══════════════════════════════════════╗\r\n");
-            term.write("║           🎮 MOBIN GAME              ║\r\n");
-            term.write("║              BETA 0.4.2              ║\r\n");
-            term.write("╚══════════════════════════════════════╝\r\n\r\n");
-
-            await typePrint("لطفا زبان خود را انتخاب کنید / Select Language:");
-            term.write("1) 🇮🇷 فارسی\r\n2) 🇬🇧 English\r\n");
-
-            while (true) {
-                let choice = await readInput("\r\nChoice: ");
-                if (choice === "1" || choice === "2") {
-                    lang = choice === "1" ? "fa" : "en";
-                    break;
-                }
-                term.write("❌ انتخاب نامعتبر!\r\n");
-            }
-
-            clearTerm();
-            if (lang === "fa") {
-                await typePrint("🎮 به Mobin Game خوش اومدی!\n");
-                while (true) {
-                    playerName = await readInput("👤 لطفا یه اسم انتخاب کن: ");
-                    if (playerName) break;
-                    term.write("❌ اسم نمی‌تونه خالی باشه!\r\n");
-                }
-            } else {
-                await typePrint("🎮 Welcome to Mobin Game!\n");
-                while (true) {
-                    playerName = await readInput("👤 Choose your name: ");
-                    if (playerName) break;
-                    term.write("❌ Name cannot be empty!\r\n");
-                }
-            }
-
-            clearTerm();
-            await typePrint(`سلام ${playerName} 👋\n`);
-            await typePrint("این نسخه Beta هست و بازی آنلاین نداره.");
-            await typePrint("شروع کنیم؟\n1) آره\n2) نه");
-
-            while (true) {
-                let start = await readInput("\r\n> ");
-                if (start === "1") break;
-                if (start === "2") {
-                    await typePrint("\r\n👋 Goodbye / خداحافظ!");
-                    return;
-                }
-                term.write("❌ انتخاب نامعتبر!\r\n");
-            }
-
-            await mainLoop();
-        }
-
-        async function shop() {
-            while (true) {
-                clearTerm();
-                term.write("╔══════════════════════════════════════╗\r\n");
-                term.write("║              🏪 SHOP                 ║\r\n");
-                term.write("╚══════════════════════════════════════╝\r\n\r\n");
-                term.write(`💰 Coin: ${coins}\r\n🪖 Soldiers: ${soldiers.length}\r\n⬆️ Upgrade Level: ${upgradeLevel}\r\n\r\n`);
-                term.write("1) 🪖 خرید سرباز (10 Coin)\r\n");
-                term.write(soldiers.length > 0 && upgradeLevel === 0 ? "2) ⬆️ Upgrade 1 (16 Coin)\r\n" : "2) 🔒 Upgrade 1 (قفل / خریداری شده)\r\n");
-                term.write(upgradeLevel === 1 && soldiers.length > 0 ? "3) 🔥 Upgrade 3 (40 Coin)\r\n" : "3) 🔒 Upgrade 3 (قفل / خریداری شده)\r\n");
-                term.write("4) 🔙 خروج\r\n");
-
-                let choice = await readInput("\r\nانتخاب: ");
-                if (choice === "1") {
-                    if (coins < 10) await typePrint("\r\n❌ Coin کافی نداری!");
-                    else {
-                        coins -= 10;
-                        let dmg = 12 + (upgradeLevel >= 1 ? 8 : 0) + (upgradeLevel >= 3 ? 20 : 0);
-                        let mhp = 100 + (upgradeLevel >= 1 ? 20 : 0) + (upgradeLevel >= 3 ? 40 : 0);
-                        soldiers.push({ hp: mhp, max_hp: mhp, damage: dmg });
-                        await typePrint(`\r\n🪖 سرباز خریداری شد! (کل: ${soldiers.length})`);
-                    }
-                } else if (choice === "2") {
-                    if (soldiers.length === 0) await typePrint("\r\n🚫 اول باید حداقل یک سرباز داشته باشی.");
-                    else if (upgradeLevel >= 1) await typePrint("\r\n❌ Upgrade 1 قبلاً خریداری شده.");
-                    else if (coins < 16) await typePrint("\r\n❌ Coin کافی نداری!");
-                    else {
-                        coins -= 16; upgradeLevel = 1;
-                        soldiers.forEach(s => { s.damage += 8; s.max_hp += 20; s.hp += 20; });
-                        await typePrint("\r\n⬆️ Upgrade 1 فعال شد!");
-                    }
-                } else if (choice === "3") {
-                    if (soldiers.length === 0) await typePrint("\r\n🚫 اول باید حداقل یک سرباز داشته باشی.");
-                    else if (upgradeLevel === 0) await typePrint("\r\n🔒 اول باید Upgrade 1 رو بخری!");
-                    else if (upgradeLevel >= 3) await typePrint("\r\n❌ Upgrade 3 قبلاً خریداری شده.");
-                    else if (coins < 40) await typePrint("\r\n❌ Coin کافی نداری!");
-                    else {
-                        coins -= 40; upgradeLevel = 3;
-                        soldiers.forEach(s => { s.damage += 20; s.max_hp += 40; s.hp += 40; });
-                        await typePrint("\r\n🔥 Upgrade 3 فعال شد!");
-                    }
-                } else if (choice === "4") break;
+        function buySoldier() {
+            if (coins >= 10) {
+                coins -= 10;
+                let dmg = 12 + (upgradeLevel >= 1 ? 8 : 0) + (upgradeLevel >= 3 ? 20 : 0);
+                let mhp = 100 + (upgradeLevel >= 1 ? 20 : 0) + (upgradeLevel >= 3 ? 40 : 0);
+                soldiers.push({ hp: mhp, max_hp: mhp, damage: dmg });
+                log(`یک سرباز جدید خریداری شد! (تعداد کل: ${soldiers.length})`);
+                updateUI();
             }
         }
 
-        async function mainLoop() {
-            while (level <= 3) {
-                castleHp = maxCastleHp;
-                let totalZombies = 5 + ((level - 1) * 3);
-                let zombiesKilled = 0;
+        function upgrade1() {
+            if (coins >= 16 && upgradeLevel === 0 && soldiers.length > 0) {
+                coins -= 16;
+                upgradeLevel = 1;
+                soldiers.forEach(s => { s.damage += 8; s.max_hp += 20; s.hp += 20; });
+                log("ارتقا سطح ۱ فعال شد! قدرد سربازان افزایش یافت.");
+                updateUI();
+            }
+        }
 
-                while (true) {
-                    clearTerm();
-                    term.write(`🏰 LEVEL ${level} | 🧟 زامبی‌ها: ${totalZombies}\r\n💰 Coin: ${coins} | 🪖 سربازها: ${soldiers.length}\r\n\r\n`);
-                    term.write("1) 🏪 فروشگاه (shop)\r\n2) 📊 وضعیت (status)\r\n3) ⚔️ شروع جنگ (start)\r\n");
-                    let cmd = await readInput("\r\n🎮 دستور: ");
-                    if (["1", "shop", "فروشگاه"].includes(cmd)) await shop();
-                    else if (["3", "start", "شروع"].includes(cmd)) break;
-                }
+        function upgrade3() {
+            if (coins >= 40 && upgradeLevel === 1) {
+                coins -= 40;
+                upgradeLevel = 3;
+                soldiers.forEach(s => { s.damage += 20; s.max_hp += 40; s.hp += 40; });
+                log("ارتقا سطح ۳ فعال شد! سربازان پرقدرت شدند 🔥");
+                updateUI();
+            }
+        }
 
-                while (zombiesKilled < totalZombies && castleHp > 0) {
-                    let zMaxHp = 60 + ((level - 1) * 25);
-                    let zHp = zMaxHp;
-                    let baseDmg = 12 + ((level - 1) * 6);
+        async function startBattle() {
+            isFighting = true;
+            updateUI();
 
-                    while (zHp > 0 && castleHp > 0) {
-                        if (soldiers.length === 0) {
-                            let dmg = Math.floor(Math.random() * 11) + 15;
-                            castleHp = Math.max(0, castleHp - dmg);
-                            await typePrint(`\r\n🧟💥 زامبی به قلعه زد! -${dmg} HP`);
-                            break;
-                        }
-                        let totalDmg = soldiers.reduce((a, b) => a + b.damage, 0);
+            let totalZombies = 5 + ((level - 1) * 3);
+            log(`⚔️ نبرد مرحله ${level} شروع شد! تعداد زامبی‌ها: ${totalZombies}`);
+
+            for (let z = 1; z <= totalZombies; z++) {
+                if (castleHp <= 0) break;
+
+                let zMaxHp = 60 + ((level - 1) * 25);
+                let zHp = zMaxHp;
+                let baseDmg = 12 + ((level - 1) * 6);
+
+                // Move Zombie In
+                zombieSprite.style.left = '80px';
+                zombieHpBar.style.width = '100%';
+                log(`🧟 زامبی شماره ${z} وارد میدان شد!`);
+                await new Promise(r => setTimeout(r, 800));
+
+                while (zHp > 0 && castleHp > 0) {
+                    // 1. Attack Phase (Soldiers vs Zombie)
+                    if (soldiers.length === 0) {
+                        // Zombie hits Castle
+                        zombieSprite.classList.add('hit-effect');
+                        castleSprite.classList.add('hit-effect');
+                        let dmg = Math.floor(Math.random() * 11) + 15;
+                        castleHp = Math.max(0, castleHp - dmg);
+                        log(`💥 هیچ سربازی نیست! زامبی به قلعه ضربه زد (-${dmg} HP)`);
+                        updateUI();
+                        await new Promise(r => setTimeout(r, 600));
+                        zombieSprite.classList.remove('hit-effect');
+                        castleSprite.classList.remove('hit-effect');
+                        break;
+                    } else {
+                        // Soldiers Hit Zombie
+                        let totalDmg = soldiers.reduce((acc, s) => acc + s.damage, 0);
                         zHp = Math.max(0, zHp - totalDmg);
-                        await typePrint(`\r\n💥 آسیب وارد شده: ${totalDmg} | 🧟 زامبی HP: ${zHp}`);
+                        zombieHpBar.style.width = `${(zHp / zMaxHp) * 100}%`;
+                        zombieSprite.classList.add('hit-effect');
+                        log(`⚔️ سربازها حمله کردند! (${totalDmg} آسیب به زامبی)`);
+                        await new Promise(r => setTimeout(r, 600));
+                        zombieSprite.classList.remove('hit-effect');
 
                         if (zHp <= 0) {
                             let reward = Math.floor(Math.random() * 4) + 2;
                             coins += reward;
-                            await typePrint(`🎉 زامبی نابود شد! +${reward} Coin`);
+                            log(`🎉 زامبی نابود شد! +${reward} سکه پاداش گرفتی.`);
+                            zombieSprite.style.left = '-80px';
+                            updateUI();
+                            await new Promise(r => setTimeout(r, 600));
                             break;
                         }
 
+                        // Zombie Retaliates
                         let targetIdx = Math.floor(Math.random() * soldiers.length);
                         let target = soldiers[targetIdx];
                         let dmg = Math.floor(Math.random() * 9) + (baseDmg - 4);
                         target.hp = Math.max(0, target.hp - dmg);
-                        await typePrint(`🎯 زامبی به Soldier ${targetIdx + 1} ضربه زد! -${dmg} HP`);
+                        log(`🧟 زامبی پاتک زد! به سرباز ${targetIdx + 1} آسیب وارد شد (-${dmg} HP)`);
 
                         if (target.hp <= 0) {
-                            await typePrint(`💀 Soldier ${targetIdx + 1} کشته شد!`);
+                            log(`💀 سرباز شماره ${targetIdx + 1} کشته شد!`);
                             soldiers.splice(targetIdx, 1);
                         }
+                        updateUI();
+                        await new Promise(r => setTimeout(r, 600));
                     }
-
-                    if (castleHp <= 0) {
-                        await typePrint("\r\n💥 قلعه سقوط کرد! باختی.");
-                        coins = 20; soldiers = []; upgradeLevel = 0; level = 1;
-                        break;
-                    }
-
-                    zombiesKilled++;
-                    if (zombiesKilled < totalZombies) {
-                        let nextPrompt = await readInput(`\r\n✅ زامبی ${zombiesKilled}/${totalZombies} نابود شد. Enter برای بعدی (یا shop): `);
-                        if (["shop", "فروشگاه"].includes(nextPrompt)) await shop();
-                    }
-                }
-
-                if (castleHp > 0) {
-                    await typePrint(`\r\n🎉 LEVEL ${level} COMPLETE! +50 Coin`);
-                    coins += 50;
-                    level++;
                 }
             }
-            await typePrint(`\r\n🏆 تبریک ${playerName}! بازی رو تموم کردی! 🔥`);
+
+            if (castleHp <= 0) {
+                log("💥 قلعه سقوط کرد! بازی بازنشانی شد.");
+                alert("شما باختید! بازی از مرحله ۱ شروع می‌شود.");
+                coins = 20; soldiers = []; upgradeLevel = 0; level = 1; castleHp = maxCastleHp;
+            } else {
+                log(`🎉 مرحله ${level} با موفقیت تمام شد! +50 سکه پاداش.`);
+                coins += 50;
+                level++;
+                castleHp = maxCastleHp;
+                if (level > 3) {
+                    alert("🏆 تبریک! شما تمام مراحل Mobin Game را با موفقیت تمام کردید!");
+                    level = 1;
+                }
+            }
+
+            zombieSprite.style.left = '-80px';
+            isFighting = false;
+            updateUI();
         }
+
+        // Init
+        updateUI();
     </script>
 </body>
 </html>
