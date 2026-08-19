@@ -3,66 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MOBIN GAME BETA 0.4.2 - GRAPHICAL EDITION</title>
+    <title>MOBIN GAME BETA 0.4.2 - ULTIMATE GRAPHICS</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
         body {
-            background-color: #0f172a;
+            background-color: #0b0f19;
             color: #f8fafc;
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             padding: 15px;
+            overflow-x: hidden;
+        }
+
+        /* --- MAIN MENU UI --- */
+        #main-menu {
+            background: rgba(30, 41, 59, 0.95);
+            border: 2px solid #38bdf8;
+            border-radius: 20px;
+            padding: 35px 25px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.2);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #38bdf8;
+            margin-bottom: 8px;
+            text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+            word-wrap: break-word;
+        }
+
+        p.subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 25px; }
+
+        .menu-btn-group { display: flex; flex-direction: column; gap: 12px; }
+
+        /* --- GAME CONTAINER --- */
+        #game-view {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.4s ease-out;
         }
 
         .card {
             background: #1e293b;
             border: 1px solid #334155;
             border-radius: 16px;
-            padding: 25px;
+            padding: 20px;
             width: 100%;
-            max-width: 750px;
-            text-align: center;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-        }
-
-        h1 { color: #38bdf8; margin-bottom: 5px; text-shadow: 0 0 10px rgba(56, 189, 248, 0.3); }
-        .subtitle { color: #94a3b8; font-size: 0.9rem; margin-bottom: 20px; }
-
-        /* Game Canvas Container */
-        #canvas-container {
-            position: relative;
-            width: 100%;
-            height: 320px;
-            background: linear-gradient(to bottom, #1e1b4b, #311b92 60%, #15803d 60%, #166534 100%);
-            border-radius: 12px;
-            border: 2px solid #475569;
-            overflow: hidden;
-            margin-bottom: 15px;
         }
 
         /* Top HUD */
         .hud {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             align-items: center;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
+            background: #0f172a;
+            border: 1px solid #334155;
+            padding: 12px 16px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            gap: 10px;
+            font-size: 0.9rem;
             font-weight: bold;
         }
 
-        .hud span { display: flex; align-items: center; gap: 5px; }
+        .hud span { display: flex; align-items: center; gap: 6px; }
 
-        /* Control Panel / Buttons */
+        /* Game Arena Canvas */
+        #canvas-container {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            background: linear-gradient(to bottom, #0f172a 0%, #1e1b4b 50%, #14532d 50%, #064e3b 100%);
+            border-radius: 12px;
+            border: 2px solid #475569;
+            overflow: hidden;
+            margin-bottom: 15px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        /* Control Panel Buttons */
         .controls {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 10px;
             margin-top: 10px;
         }
@@ -71,52 +106,62 @@
             background: #2563eb;
             color: white;
             border: none;
-            padding: 12px 10px;
-            font-size: 0.9rem;
+            padding: 12px 8px;
+            font-size: 0.88rem;
             font-weight: bold;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            word-wrap: break-word;
         }
 
-        .btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); }
-        .btn:disabled { background: #475569; opacity: 0.6; cursor: not-allowed; }
+        .btn:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 14px rgba(37, 99, 235, 0.4); }
+        .btn:disabled { background: #334155; color: #64748b; opacity: 0.6; cursor: not-allowed; }
         .btn-danger { background: #dc2626; }
         .btn-danger:hover:not(:disabled) { background: #b91c1c; }
-        .btn-success { background: #16a34a; }
-        .btn-success:hover:not(:disabled) { background: #15803d; }
+        .btn-secondary { background: #334155; }
+        .btn-secondary:hover:not(:disabled) { background: #475569; }
 
-        /* Message Log */
+        /* Fixed Log Box Area */
         #log-box {
             background: #0f172a;
             border: 1px solid #334155;
-            border-radius: 8px;
-            padding: 10px;
-            height: 80px;
+            border-radius: 10px;
+            padding: 12px;
+            height: 90px;
             overflow-y: auto;
             font-size: 0.85rem;
             text-align: right;
             color: #38bdf8;
             margin-top: 12px;
+            line-height: 1.5;
+            word-break: break-word;
+            white-space: pre-wrap;
         }
 
-        /* Elements inside Canvas */
+        /* Animated Sprites */
         .sprite {
             position: absolute;
-            bottom: 60px;
-            font-size: 45px;
-            transition: all 0.3s ease;
+            bottom: 50px;
+            font-size: 42px;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex;
             flex-direction: column;
             align-items: center;
+            z-index: 2;
         }
 
         .hp-bar-outer {
-            width: 40px;
+            width: 44px;
             height: 6px;
-            background: #475569;
-            border-radius: 3px;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 4px;
             overflow: hidden;
             margin-bottom: 4px;
         }
@@ -125,66 +170,89 @@
             height: 100%;
             background: #22c55e;
             width: 100%;
-            transition: width 0.2s;
+            transition: width 0.3s ease;
         }
 
-        .hit-effect {
-            animation: shake 0.3s ease-in-out;
+        /* Animation Keyframes */
+        .attack-effect { animation: attackAnim 0.3s ease; }
+        .hit-effect { animation: hitAnim 0.3s ease; }
+
+        @keyframes attackAnim {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3) translateX(-10px); }
+            100% { transform: scale(1); }
         }
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-6px); }
-            75% { transform: translateX(6px); }
+        @keyframes hitAnim {
+            0%, 100% { transform: translateX(0); filter: none; }
+            25% { transform: translateX(-8px); filter: drop-shadow(0 0 8px red); }
+            75% { transform: translateX(8px); filter: drop-shadow(0 0 8px red); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-    <div class="card">
+    <!-- ================= MAIN MENU ================= -->
+    <div id="main-menu">
         <h1>🏰 MOBIN GAME</h1>
-        <p class="subtitle">نسخه گرافیکی اختصاصی (Graphic Beta 0.4.2)</p>
+        <p class="subtitle">نسخه گرافیکی پیشرفته (BETA 0.4.2)</p>
 
-        <!-- HUD Status -->
-        <div class="hud">
-            <span>👤 <span id="p-name">بازیکن</span></span>
-            <span>🎯 مرحله: <span id="lvl-txt">1</span></span>
-            <span>💰 سکه: <span id="coin-txt">20</span></span>
-            <span>🏰 قلعه: <span id="castle-hp">100</span>/100</span>
+        <div class="menu-btn-group">
+            <button class="btn" onclick="startGameView()">🎮 شروع بازی</button>
+            <button class="btn btn-secondary" onclick="alert('📜 راهنما:\n\n1. از فروشگاه سرباز بگیرید تا از قلعه دفاع کنند.\n2. با خرج کردن سکه، سربازها را ارتقا دهید.\n3. زامبی‌ها به صورت موجی حمله می‌کنند، اجازه ندهید به قلعه برسند!')">📜 راهنمای بازی</button>
+            <button class="btn btn-secondary" onclick="alert('ℹ️ درباره بازی:\nطراحی و توسعه توسط: مبین گرجی‌زاده\nنسخه: Beta 0.4.2 (Graphical Engine)')">ℹ️ درباره سازنده</button>
         </div>
+    </div>
 
-        <!-- Visual Canvas Arena -->
-        <div id="canvas-container">
-            <!-- Castle -->
-            <div class="sprite" style="right: 20px; bottom: 50px;" id="castle-sprite">
-                <div class="hp-bar-outer"><div class="hp-bar-inner" id="castle-hp-bar"></div></div>
-                🏰
+    <!-- ================= GAME PLAY VIEW ================= -->
+    <div id="game-view">
+        <div class="card">
+            <!-- HUD Status -->
+            <div class="hud">
+                <span>🎯 مرحله: <span id="lvl-txt" style="color:#38bdf8;">1</span></span>
+                <span>💰 سکه: <span id="coin-txt" style="color:#facc15;">20</span></span>
+                <span>🏰 قلعه: <span id="castle-hp" style="color:#4ade80;">100</span>/100</span>
+                <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem;" onclick="returnToMenu()">🏠 منو</button>
             </div>
 
-            <!-- Soldiers Container -->
-            <div id="soldiers-area" style="position: absolute; right: 100px; bottom: 55px; display: flex; gap: 8px;"></div>
+            <!-- Visual Canvas Arena -->
+            <div id="canvas-container">
+                <!-- Castle -->
+                <div class="sprite" style="right: 15px; bottom: 45px;" id="castle-sprite">
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" id="castle-hp-bar"></div></div>
+                    🏰
+                </div>
 
-            <!-- Zombie Sprite -->
-            <div class="sprite" id="zombie-sprite" style="left: -80px; bottom: 55px;">
-                <div class="hp-bar-outer"><div class="hp-bar-inner" id="zombie-hp-bar"></div></div>
-                🧟
+                <!-- Soldiers Container -->
+                <div id="soldiers-area" style="position: absolute; right: 90px; bottom: 50px; display: flex; gap: 6px; z-index: 2;"></div>
+
+                <!-- Zombie Sprite -->
+                <div class="sprite" id="zombie-sprite" style="left: -80px; bottom: 50px;">
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" id="zombie-hp-bar"></div></div>
+                    🧟
+                </div>
             </div>
-        </div>
 
-        <!-- Log Info -->
-        <div id="log-box">به بازی مبین گیم خوش آمدید! برای شروع از فروشگاه سرباز بگیرید یا نبرد رو شروع کنید.</div>
+            <!-- Log Info Area (Fixed Scroll & No Overflow) -->
+            <div id="log-box">به Mobin Game خوش آمدید! با زدن دکمه خرید سرباز، اولین مدافع خود را بسازید.</div>
 
-        <!-- Buttons Controls -->
-        <div class="controls">
-            <button class="btn" id="btn-buy" onclick="buySoldier()">🪖 خرید سرباز (10💰)</button>
-            <button class="btn" id="btn-up1" onclick="upgrade1()">⬆️ ارتقا ۱ (16💰)</button>
-            <button class="btn" id="btn-up3" onclick="upgrade3()">🔥 ارتقا ۳ (40💰)</button>
-            <button class="btn btn-danger" id="btn-fight" onclick="startBattle()">⚔️ شروع نبرد</button>
+            <!-- Control Buttons -->
+            <div class="controls">
+                <button class="btn" id="btn-buy" onclick="buySoldier()">🪖 خرید سرباز (10💰)</button>
+                <button class="btn" id="btn-up1" onclick="upgrade1()">⬆️ ارتقا ۱ (16💰)</button>
+                <button class="btn" id="btn-up3" onclick="upgrade3()">🔥 ارتقا ۳ (40💰)</button>
+                <button class="btn btn-danger" id="btn-fight" onclick="startBattle()">⚔️ شروع نبرد</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // --- GAME VARIABLES ---
+        // --- GAME STATE ---
         let coins = 20;
         let level = 1;
         let castleHp = 100;
@@ -193,7 +261,7 @@
         let soldiers = [];
         let isFighting = false;
 
-        // --- DOM ELEMENTS ---
+        // --- DOM REFERENCES ---
         const coinTxt = document.getElementById('coin-txt');
         const lvlTxt = document.getElementById('lvl-txt');
         const castleHpTxt = document.getElementById('castle-hp');
@@ -204,17 +272,30 @@
         const zombieHpBar = document.getElementById('zombie-hp-bar');
         const castleSprite = document.getElementById('castle-sprite');
 
+        function startGameView() {
+            document.getElementById('main-menu').style.display = 'none';
+            document.getElementById('game-view').style.display = 'flex';
+            updateUI();
+        }
+
+        function returnToMenu() {
+            if (isFighting) {
+                if (!confirm("نبرد در جریان است! آیا مطمئن هستید می‌خواهید خارج شوید؟")) return;
+            }
+            location.reload();
+        }
+
         function log(msg) {
-            logBox.innerHTML = `> ${msg}<br>` + logBox.innerHTML;
+            logBox.innerHTML = `> ${msg}\n` + logBox.innerHTML;
         }
 
         function updateUI() {
             coinTxt.innerText = coins;
             lvlTxt.innerText = level;
             castleHpTxt.innerText = castleHp;
-            castleHpBar.style.width = `${(castleHp / maxCastleHp) * 100}%`;
+            castleHpBar.style.width = `${Math.max(0, (castleHp / maxCastleHp) * 100)}%`;
 
-            // Update Soldiers Render
+            // Render Soldiers
             soldiersArea.innerHTML = '';
             soldiers.forEach((s, i) => {
                 const sEl = document.createElement('div');
@@ -222,13 +303,13 @@
                 sEl.style.position = 'relative';
                 sEl.style.bottom = '0';
                 sEl.innerHTML = `
-                    <div class="hp-bar-outer"><div class="hp-bar-inner" style="width:${(s.hp/s.max_hp)*100}%"></div></div>
+                    <div class="hp-bar-outer"><div class="hp-bar-inner" style="width:${Math.max(0, (s.hp/s.max_hp)*100)}%"></div></div>
                     🪖
                 `;
                 soldiersArea.appendChild(sEl);
             });
 
-            // Disable buttons if fighting
+            // Button Control Lock
             document.getElementById('btn-buy').disabled = isFighting || coins < 10;
             document.getElementById('btn-up1').disabled = isFighting || upgradeLevel >= 1 || coins < 16 || soldiers.length === 0;
             document.getElementById('btn-up3').disabled = isFighting || upgradeLevel !== 1 || coins < 40;
@@ -241,7 +322,7 @@
                 let dmg = 12 + (upgradeLevel >= 1 ? 8 : 0) + (upgradeLevel >= 3 ? 20 : 0);
                 let mhp = 100 + (upgradeLevel >= 1 ? 20 : 0) + (upgradeLevel >= 3 ? 40 : 0);
                 soldiers.push({ hp: mhp, max_hp: mhp, damage: dmg });
-                log(`یک سرباز جدید خریداری شد! (تعداد کل: ${soldiers.length})`);
+                log(`یک سرباز جدید اضافه شد! (تعداد: ${soldiers.length})`);
                 updateUI();
             }
         }
@@ -251,7 +332,7 @@
                 coins -= 16;
                 upgradeLevel = 1;
                 soldiers.forEach(s => { s.damage += 8; s.max_hp += 20; s.hp += 20; });
-                log("ارتقا سطح ۱ فعال شد! قدرد سربازان افزایش یافت.");
+                log("⬆️ ارتقای ۱ فعال شد! قدرت و سلامت سربازان افزایش یافت.");
                 updateUI();
             }
         }
@@ -261,7 +342,7 @@
                 coins -= 40;
                 upgradeLevel = 3;
                 soldiers.forEach(s => { s.damage += 20; s.max_hp += 40; s.hp += 40; });
-                log("ارتقا سطح ۳ فعال شد! سربازان پرقدرت شدند 🔥");
+                log("🔥 ارتقای ۳ فعال شد! سربازان تبدیل به نیروی ویژه شدند.");
                 updateUI();
             }
         }
@@ -271,7 +352,7 @@
             updateUI();
 
             let totalZombies = 5 + ((level - 1) * 3);
-            log(`⚔️ نبرد مرحله ${level} شروع شد! تعداد زامبی‌ها: ${totalZombies}`);
+            log(`⚔️ نبرد مرحله ${level} شروع شد! زامبی‌های پیش‌رو: ${totalZombies}`);
 
             for (let z = 1; z <= totalZombies; z++) {
                 if (castleHp <= 0) break;
@@ -280,34 +361,39 @@
                 let zHp = zMaxHp;
                 let baseDmg = 12 + ((level - 1) * 6);
 
-                // Move Zombie In
-                zombieSprite.style.left = '80px';
+                // Zombie Approach
+                zombieSprite.style.left = '70px';
                 zombieHpBar.style.width = '100%';
-                log(`🧟 زامبی شماره ${z} وارد میدان شد!`);
-                await new Promise(r => setTimeout(r, 800));
+                log(`🧟 زامبی شماره ${z} داره نزدیک میشه!`);
+                await new Promise(r => setTimeout(r, 700));
 
                 while (zHp > 0 && castleHp > 0) {
-                    // 1. Attack Phase (Soldiers vs Zombie)
                     if (soldiers.length === 0) {
-                        // Zombie hits Castle
-                        zombieSprite.classList.add('hit-effect');
+                        // Zombie Hits Castle
+                        zombieSprite.classList.add('attack-effect');
                         castleSprite.classList.add('hit-effect');
                         let dmg = Math.floor(Math.random() * 11) + 15;
                         castleHp = Math.max(0, castleHp - dmg);
-                        log(`💥 هیچ سربازی نیست! زامبی به قلعه ضربه زد (-${dmg} HP)`);
+                        log(`💥 زامبی مستقیم به قلعه زد! (-${dmg} HP)`);
                         updateUI();
-                        await new Promise(r => setTimeout(r, 600));
-                        zombieSprite.classList.remove('hit-effect');
+
+                        await new Promise(r => setTimeout(r, 500));
+                        zombieSprite.classList.remove('attack-effect');
                         castleSprite.classList.remove('hit-effect');
                         break;
                     } else {
-                        // Soldiers Hit Zombie
+                        // Soldiers Attack Zombie
                         let totalDmg = soldiers.reduce((acc, s) => acc + s.damage, 0);
                         zHp = Math.max(0, zHp - totalDmg);
-                        zombieHpBar.style.width = `${(zHp / zMaxHp) * 100}%`;
+                        zombieHpBar.style.width = `${Math.max(0, (zHp / zMaxHp) * 100)}%`;
+                        
+                        // Attack Animation
+                        soldiersArea.classList.add('attack-effect');
                         zombieSprite.classList.add('hit-effect');
-                        log(`⚔️ سربازها حمله کردند! (${totalDmg} آسیب به زامبی)`);
-                        await new Promise(r => setTimeout(r, 600));
+                        log(`⚔️ سربازها هجوم بردند! (${totalDmg} آسیب به زامبی)`);
+
+                        await new Promise(r => setTimeout(r, 500));
+                        soldiersArea.classList.remove('attack-effect');
                         zombieSprite.classList.remove('hit-effect');
 
                         if (zHp <= 0) {
@@ -316,38 +402,43 @@
                             log(`🎉 زامبی نابود شد! +${reward} سکه پاداش گرفتی.`);
                             zombieSprite.style.left = '-80px';
                             updateUI();
-                            await new Promise(r => setTimeout(r, 600));
+                            await new Promise(r => setTimeout(r, 500));
                             break;
                         }
 
-                        // Zombie Retaliates
+                        // Zombie Counter-Attacks
                         let targetIdx = Math.floor(Math.random() * soldiers.length);
                         let target = soldiers[targetIdx];
                         let dmg = Math.floor(Math.random() * 9) + (baseDmg - 4);
                         target.hp = Math.max(0, target.hp - dmg);
-                        log(`🧟 زامبی پاتک زد! به سرباز ${targetIdx + 1} آسیب وارد شد (-${dmg} HP)`);
+                        
+                        zombieSprite.classList.add('attack-effect');
+                        log(`🧟 زامبی ضدحمله زد! سرباز ${targetIdx + 1} آسیب دید (-${dmg} HP)`);
+
+                        await new Promise(r => setTimeout(r, 500));
+                        zombieSprite.classList.remove('attack-effect');
 
                         if (target.hp <= 0) {
-                            log(`💀 سرباز شماره ${targetIdx + 1} کشته شد!`);
+                            log(`💀 سرباز شماره ${targetIdx + 1} از پا درآمد!`);
                             soldiers.splice(targetIdx, 1);
                         }
                         updateUI();
-                        await new Promise(r => setTimeout(r, 600));
+                        await new Promise(r => setTimeout(r, 500));
                     }
                 }
             }
 
             if (castleHp <= 0) {
-                log("💥 قلعه سقوط کرد! بازی بازنشانی شد.");
-                alert("شما باختید! بازی از مرحله ۱ شروع می‌شود.");
+                log("💥 قلعه سقوط کرد! بازی دوباره از لول ۱ شروع می‌شود.");
+                alert("💔 باختی! قلعه سقوط کرد.");
                 coins = 20; soldiers = []; upgradeLevel = 0; level = 1; castleHp = maxCastleHp;
             } else {
-                log(`🎉 مرحله ${level} با موفقیت تمام شد! +50 سکه پاداش.`);
+                log(`🎉 مرحله ${level} با موفقیت فتح شد! +50 سکه جایزه.`);
                 coins += 50;
                 level++;
                 castleHp = maxCastleHp;
                 if (level > 3) {
-                    alert("🏆 تبریک! شما تمام مراحل Mobin Game را با موفقیت تمام کردید!");
+                    alert("🏆 تبریک! شما تمام مراحل Mobin Game را فتح کردید!");
                     level = 1;
                 }
             }
@@ -356,9 +447,6 @@
             isFighting = false;
             updateUI();
         }
-
-        // Init
-        updateUI();
     </script>
 </body>
 </html>
